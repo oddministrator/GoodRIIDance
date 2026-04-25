@@ -1,0 +1,294 @@
+:root {
+    /* Primary Colors */
+    --navy-blue: #003057;
+    --tech-gold: #B3A369;
+    --white: #FFFFFF;
+
+    /* Secondary Colors */
+    --diploma: #F9F6E5;
+    --buzz-gold: #EAAA00;
+    --gray-matter: #54585A;
+    --pi-mile: #D6DBD4;
+
+    /* Tertiary Colors */
+    --bold-blue: #3A5DAE;
+    --electric-blue: #64CCC9;
+    --rat-cap: #FFCD00;
+    --new-horizon: #E04F39;
+
+    /* Application Mapping */
+    --bg-base: var(--navy-blue);
+    --bg-panel: var(--bold-blue);
+    --text-main: var(--white);
+    --text-muted: var(--pi-mile);
+    --accent: var(--tech-gold);
+    --accent-glow: rgba(179, 163, 105, 0.4); /* Tech Gold */
+    --border: var(--gray-matter);
+    --border-radius: 8px;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: system-ui, -apple-system, sans-serif;
+}
+
+body {
+    background-color: var(--bg-base);
+    color: var(--text-main);
+    line-height: 1.6;
+    padding: 2rem 1rem;
+}
+
+.app-container {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.app-header {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.header-left {
+    display: flex;
+    justify-content: flex-start;
+}
+
+.header-center {
+    text-align: center;
+}
+
+.header-right {
+    display: flex;
+}
+
+.app-header h1 {
+    color: var(--accent);
+    font-size: 2.5rem;
+    letter-spacing: -0.5px;
+}
+
+.app-header p {
+    color: var(--text-muted);
+}
+
+.dashboard {
+    display: block;
+    width: 100%;
+}
+
+.panel {
+    background-color: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: var(--border-radius);
+    padding: 2rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.panel h2 {
+    margin-bottom: 1.5rem;
+    font-size: 1.25rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.5rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+select, input {
+    width: 100%;
+    padding: 0.75rem;
+    background-color: var(--bg-base);
+    border: 1px solid var(--border);
+    color: var(--text-main);
+    border-radius: 4px;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+select:focus, input:focus {
+    border-color: var(--accent);
+}
+
+select:disabled, input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Profile and Equipment Input Styles */
+.input-group {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.input-group input {
+    flex-grow: 1;
+}
+
+.input-group button {
+    background-color: var(--accent);
+    color: var(--bg-base);
+    border: none;
+    border-radius: 4px;
+    padding: 0 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.input-group button:hover:not(:disabled) {
+    opacity: 0.8;
+}
+
+.input-group button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.status-text {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-top: 0.5rem;
+}
+
+.status-text strong {
+    color: var(--accent);
+}
+
+.panel-divider {
+    border: 0;
+    border-top: 1px solid var(--border);
+    margin: 1.5rem 0;
+}
+
+/* Results Panel Specifics */
+.result-card {
+    background-color: var(--bg-base);
+    border: 1px solid var(--border);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.result-card.highlight {
+    border-color: var(--accent);
+    box-shadow: 0 0 15px var(--accent-glow);
+}
+
+.result-card h3 {
+    font-size: 1rem;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.result-value {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: var(--accent);
+}
+
+.unit {
+    font-size: 1rem;
+    color: var(--text-muted);
+    font-weight: normal;
+}
+
+.progress-bar-container {
+    width: 100%;
+    height: 8px;
+    background-color: var(--border);
+}
+
+.top-left-profile {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    width: 100%;
+    max-width: 250px;
+}
+
+.top-left-profile .status-text {
+    margin-top: 0;
+    font-size: 0.85rem;
+}
+
+.small-input {
+    padding: 0.4rem 0.5rem;
+    font-size: 0.85rem;
+    height: 30px;
+}
+
+.small-btn {
+    padding: 0 0.5rem;
+    font-size: 0.85rem;
+    height: 30px;
+}
+
+.app-tabs {
+    margin-top: 1rem;
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.tab-btn {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.tab-btn:hover {
+    color: var(--text-main);
+    border-color: var(--text-main);
+}
+
+.tab-btn.active {
+    background: var(--accent);
+    color: var(--bg-base);
+    border-color: var(--accent);
+}
+
+.inventory-list-item {
+    color: var(--text-main);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.2rem 0;
+}
+
+.delete-btn {
+    background: transparent;
+    color: var(--new-horizon);
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    padding: 0 0.5rem;
+    font-size: 1rem;
+    line-height: 1;
+    transition: opacity 0.2s;
+}
+
+.delete-btn:hover {
+    opacity: 0.7;
+}

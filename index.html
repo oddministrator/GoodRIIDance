@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GoodRIIDance | Shielding Calculator</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="header-left">
+                <div class="top-left-profile">
+                    <p class="status-text" id="user-status">Currently acting as: <strong id="current-user-display">Guest</strong></p>
+                    <div class="input-group">
+                        <input type="text" id="handle-input" class="small-input" placeholder="Enter handle...">
+                        <button id="login-btn" class="small-btn">Load</button>
+                    </div>
+                </div>
+            </div>
+            <div class="header-center">
+                <h1>GoodRIIDance</h1>
+                <p>Radioisotope Attenuation & Shielding Calculator</p>
+                <nav class="app-tabs">
+                    <button class="tab-btn active" id="tab-inventory">Inventory Manager</button>
+                    <button class="tab-btn" id="tab-results">Transmission Results</button>
+                    <button class="tab-btn" id="tab-palette">Color Palette</button>
+                </nav>
+            </div>
+            <div class="header-right"></div>
+        </header>
+
+        <main class="dashboard">
+            <div id="panel-inventory" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: stretch;">
+                <section class="panel control-panel">
+                    <h2>Add to Inventory</h2>
+
+                <div class="form-group equipment-box">
+                    <label for="equipment-select">Active Detector</label>
+                    <select id="equipment-select">
+                        <option value="">-- Create a handle to add equipment --</option>
+                    </select>
+                    
+                    <div class="new-equipment-form" style="margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.5rem; padding: 1rem; border: 1px solid var(--border); border-radius: var(--border-radius);">
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.25rem;">Add New Detector</p>
+                        <input type="text" id="new-equip-input" placeholder="Detector Name" disabled>
+                        
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0px; margin-top: 0.25rem;">Calibrated against:</p>
+                        <div class="input-group">
+                            <input type="number" id="equip-calib-mass-input" placeholder="A#" style="width: 35%; flex-grow: 0;" disabled>
+                            <select id="equip-calib-isotope-select" disabled>
+                                <option value="">Enter A-number first</option>
+                            </select>
+                        </div>
+                        <button id="add-equip-btn" disabled style="margin-top: 0.25rem; padding: 0.4rem; background: var(--accent); color: var(--bg-base); border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">Add Detector</button>
+                    </div>
+                </div>
+
+                <div class="form-group known-sources-box">
+                    <label for="source-select">Active Known Source</label>
+                    <select id="source-select">
+                        <option value="">-- Create a handle to add sources --</option>
+                    </select>
+                    
+                    <div class="new-source-form" style="margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.5rem; padding: 1rem; border: 1px solid var(--border); border-radius: var(--border-radius);">
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.25rem;">Add New Source</p>
+                        
+                        <div class="input-group">
+                            <input type="number" id="source-mass-input" placeholder="A# (e.g. 137)" style="width: 35%; flex-grow: 0;" disabled>
+                            <select id="source-isotope-select" disabled>
+                                <option value="">Enter A-number first</option>
+                            </select>
+                        </div>
+                        
+                        <div class="input-group">
+                            <input type="number" step="any" id="source-activity-input" placeholder="Activity" disabled>
+                            <select id="source-activity-unit" style="width: 35%; flex-grow: 0;" disabled>
+                                <option value="1">Bq</option>
+                                <option value="1000000">MBq</option>
+                                <option value="1000000000">GBq</option>
+                                <option value="1000000000000">TBq</option>
+                            </select>
+                        </div>
+                        
+                        <div class="input-group">
+                            <input type="datetime-local" id="source-datetime-input" disabled>
+                            <button id="add-source-btn" disabled>+</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group attenuators-box">
+                    <label for="attenuator-select">Active Attenuator</label>
+                    <select id="attenuator-select">
+                        <option value="">-- Create a handle to add attenuators --</option>
+                    </select>
+                    
+                    <div class="new-attenuator-form" style="margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.5rem; padding: 1rem; border: 1px solid var(--border); border-radius: var(--border-radius);">
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.25rem;">Add New Attenuator</p>
+                        
+                        <div class="input-group">
+                            <select id="attenuator-material-select" disabled>
+                                <option value="">Loading materials...</option>
+                            </select>
+                        </div>
+                        
+                        <div class="input-group">
+                            <input type="number" step="0.1" min="0" id="attenuator-thickness-input" placeholder="Thickness" disabled>
+                            <span style="display: flex; align-items: center; color: var(--text-muted); font-size: 0.9rem; padding: 0 0.5rem; background: var(--bg-base); border: 1px solid var(--border); border-radius: 4px;">cm</span>
+                            <button id="add-attenuator-btn" disabled>+</button>
+                        </div>
+                    </div>
+                </div>
+                </section>
+
+                <section class="panel inventory-list-panel">
+                    <h2>Inventory</h2>
+                    <div style="margin-top: 1rem;">
+                        <h3 style="font-size: 1rem; color: var(--text-muted); margin-bottom: 0.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.25rem;">Detectors</h3>
+                        <ul id="inventory-detectors-ui" style="list-style: none; padding-left: 0.5rem; gap: 0.5rem; display: flex; flex-direction: column;">
+                            <li style="color: var(--text-muted); font-size: 0.9rem;">-- Log in to view --</li>
+                        </ul>
+                    </div>
+                    <div style="margin-top: 1.5rem;">
+                        <h3 style="font-size: 1rem; color: var(--text-muted); margin-bottom: 0.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.25rem;">Known Sources</h3>
+                        <table id="inventory-sources-ui" style="width: 100%; border-collapse: collapse; font-size: 0.9rem; text-align: left; color: var(--text-main);">
+                            <thead>
+                                <tr style="color: var(--text-muted); border-bottom: 1px solid var(--border);">
+                                    <th style="padding: 0.25rem 0;">Isotope</th>
+                                    <th title="Original Activity" style="cursor: help; padding: 0.25rem 0; border-bottom: 1px dotted var(--text-muted);">A<sub>0</sub></th>
+                                    <th title="Source Date" style="cursor: help; padding: 0.25rem 0; border-bottom: 1px dotted var(--text-muted);">Date<sub>0</sub></th>
+                                    <th title="Current Activity" style="cursor: help; padding: 0.25rem 0; border-bottom: 1px dotted var(--text-muted);">Activity</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td colspan="5" style="color: var(--text-muted); text-align: center; padding-top: 0.5rem;">-- Log in to view --</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div style="margin-top: 1.5rem;">
+                        <h3 style="font-size: 1rem; color: var(--text-muted); margin-bottom: 0.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.25rem;">Attenuators</h3>
+                        <ul id="inventory-attenuators-ui" style="list-style: none; padding-left: 0.5rem; gap: 0.5rem; display: flex; flex-direction: column;">
+                            <li style="color: var(--text-muted); font-size: 0.9rem;">-- Log in to view --</li>
+                        </ul>
+                    </div>
+                </section>
+            </div>
+
+            <section class="panel results-panel" id="panel-results" style="display: none;">
+                <h2>Transmission Parameters</h2>
+                <div class="form-group">
+                    <label for="isotope-select">Select Isotope</label>
+                    <select id="isotope-select">
+                        <option value="">Loading database...</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="energy-select">Gamma Energy (keV)</label>
+                    <select id="energy-select" disabled>
+                        <option value="">Select an isotope first</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="material-select">Shielding Material</label>
+                    <select id="material-select" disabled>
+                        <option value="">Select an energy first</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="thickness-input">Thickness (cm)</label>
+                    <input type="number" id="thickness-input" min="0" step="0.1" value="1.0" disabled>
+                </div>
+
+                <hr class="panel-divider">
+                <h2>Transmission Results</h2>
+                
+                <div class="result-card">
+                    <h3>Linear Attenuation (&mu;)</h3>
+                    <div class="result-value" id="mu-display">-- <span class="unit">cm&sup1;</span></div>
+                </div>
+
+                <div class="result-card highlight">
+                    <h3>Transmission Factor (I/I&zwj;&#8320;)</h3>
+                    <div class="result-value" id="transmission-display">-- <span class="unit">%</span></div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" id="transmission-bar" style="width: 0%;"></div>
+                    </div>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric-box">
+                        <h4>Half-Value Layer (HVL)</h4>
+                        <div class="metric-value" id="hvl-display">-- <span class="unit">cm</span></div>
+                    </div>
+                    <div class="metric-box">
+                        <h4>Tenth-Value Layer (TVL)</h4>
+                        <div class="metric-value" id="tvl-display">-- <span class="unit">cm</span></div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="panel palette-panel" id="panel-palette" style="display: none;">
+                <h2>Color Palette</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                    <!-- Primary Colors -->
+                    <div style="background-color: var(--navy-blue); color: #FFFFFF; padding: 2rem 1rem; text-align: center; border-radius: var(--border-radius); font-weight: bold;">Navy Blue</div>
+                    <div style="background-color: var(--tech-gold); color: #FFFFFF; padding: 2rem 1rem; text-align: center; border-radius: var(--border-radius); font-weight: bold;">Tech Gold</div>
+                    <div style="background-color: var(--white); color: #FFFFFF; padding: 2rem 1rem; text-align: center; border-radius: var(--border-radius); font-weight: bold; text-shadow: 0 1px 3px rgba(0,0,0,0.3);">White</div>
+                    
+                    <!-- Secondary Colors -->
+                    <div style="background-color: var(--diploma); color: #FFFFFF; padding: 2rem 1rem; text-align: center; border-radius: var(--border-radius); font-weight: bold; text-shadow: 0 1px 3px rgba(0,0,0,0.3);">Diploma</div>
+                    <div style="background-color: var(--buzz-gold); color: #FFFFFF; padding: 2rem 1rem; text-align: center; border-radius: var(--border-radius); font-weight: bold;">Buzz Gold</div>
+                    <div style="background-color: var(--gray-matter); color: #FFFFFF; padding: 2rem 1rem; text-align: center; border-radius: var(--border-radius); font-weight: bold;">Gray Matter</div>
+                    <div style="background-color: var(--pi-mile); color: #FFFFFF; padding: 2rem 1rem; text-align: center; border-radius: var(--border-radius); font-weight: bold; text-shadow: 0 1px 3px rgba(0,0,0,0.3);">PI Mile</div>
+                    
+                    <!-- Tertiary Colors -->
+                    <div style="background-color: var(--bold-blue); color: #FFFFFF; padding: 2rem 1rem; text-align: center; border-radius: var(--border-radius); font-weight: bold;">Bold Blue</div>
+                    <div style="background-color: var(--electric-blue); color: #FFFFFF; padding: 2rem 1rem; text-align: center; border-radius: var(--border-radius); font-weight: bold;">Electric Blue</div>
+                    <div style="background-color: var(--rat-cap); color: #FFFFFF; padding: 2rem 1rem; text-align: center; border-radius: var(--border-radius); font-weight: bold;">Rat Cap</div>
+                    <div style="background-color: var(--new-horizon); color: #FFFFFF; padding: 2rem 1rem; text-align: center; border-radius: var(--border-radius); font-weight: bold;">New Horizon</div>
+                </div>
+            </section>
+        </main>
+        
+        <footer>
+            <p>&copy; 2026 Clayton Smith. All Rights Reserved.</p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

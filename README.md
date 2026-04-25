@@ -63,7 +63,10 @@ The application logic is broken down into ES6 modules to separate concerns and m
 
 ### `/data/` Directory
 * **`isotopes.json`**
-  A structured, read-only data store containing the reference values for the physics calculations. It stores objects representing known isotopes, their specific gamma energies (in keV or MeV), and a nested dictionary of their theoretical linear attenuation coefficients ($\mu$) across various materials (e.g., Lead, Aluminum, Copper, Water).
+  A structured, read-only data store containing the reference values for the physics calculations. It stores objects representing known isotopes, their specific gamma energies (in keV or MeV, only those with 10% incidence or greater). 
+  
+* **`isotopes_with_attenuation.json`**
+  An extended version of isotopes.json with the addition of linear attenuation coefficients for each of its gamma energies for a selection of 20 attenuating elements and materials.
 
 ### `/assets/` Directory
 * **`icon-512.png`**
