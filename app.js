@@ -3,6 +3,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const handleInput = document.getElementById("handle-input");
     const loginBtn = document.getElementById("login-btn");
     const userDisplay = document.getElementById("current-user-display");
+    const loginInputGroup = document.getElementById("login-input-group");
+    const plotDetectorSelect = document.getElementById("plot-detector-select");
+    const toggleTooltipsBtns = document.querySelectorAll(".toggle-tooltips-btn");
     
     const equipSelect = document.getElementById("equipment-select");
     const backgroundInput = document.getElementById("background-input");
@@ -31,6 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const measurementInput = document.getElementById("measurement-input");
     const addMeasurementBtn = document.getElementById("add-measurement-btn");
     const measurementsTableBody = document.querySelector("#measurements-table tbody");
+    const measurementsTableHeading = document.getElementById("measurements-table-heading");
     const transmissionFactorsTableBody = document.querySelector("#transmission-factors-table tbody");
     const theoreticalTransmissionContainer = document.getElementById("theoretical-transmission-container");
     const resetMeasurementsBtn = document.getElementById("reset-measurements-btn");
@@ -144,7 +148,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     tr.style.borderBottom = "1px solid rgba(255,255,255,0.1)";
                     
                     const tdName = document.createElement("td");
-                    tdName.style.padding = "0.25rem 0";
+                    tdName.style.padding = "0.25rem 0.5rem";
                     tdName.textContent = name;
                     
                     const tdCal = document.createElement("td");
@@ -390,11 +394,11 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!handleName || !userProfiles[handleName]) return;
         const userData = userProfiles[handleName];
         
-        const equipSelectEl = document.getElementById("equipment-select");
-        const equipIdx = parseInt(equipSelectEl.value, 10);
-        if (isNaN(equipIdx) || !userData.equipment || !userData.equipment[equipIdx]) return;
+        const detName = plotDetectorSelect ? plotDetectorSelect.value : null;
+        if (!detName) return;
         
-        const eq = userData.equipment[equipIdx];
+        const eq = userData.equipment.find(e => (typeof e === 'string' ? e : e.name) === detName);
+        if (!eq) return;
         const calib = typeof eq === 'string' ? "137-cs" : (eq.calib || "137-cs"); 
         const parts = calib.split('-');
         let calEnergy = 0;
@@ -707,7 +711,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         tr.style.borderBottom = "1px solid rgba(255,255,255,0.1)";
                         
                         const tdIso = document.createElement("td");
-                        tdIso.style.padding = "0.25rem 0";
+                        tdIso.style.padding = "0.25rem 0.5rem";
                         tdIso.textContent = isoText;
                         const tdA0 = document.createElement("td");
                         tdA0.style.padding = "0.25rem 0";
@@ -781,12 +785,10 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
         
-        const equipIdx = parseInt(equipSelect.value, 10);
+        const detName = plotDetectorSelect ? plotDetectorSelect.value : null;
         let measArray = [];
-        if (!isNaN(equipIdx) && userData.equipment && userData.equipment[equipIdx]) {
-            const currDetItem = userData.equipment[equipIdx];
-            const currentDetName = typeof currDetItem === 'string' ? currDetItem : currDetItem.name;
-            measArray = (userData.measurements || []).filter(m => m.detName === currentDetName);
+        if (detName) {
+            measArray = (userData.measurements || []).filter(m => m.detName === detName);
         }
         
         let allItemsToRender = [];
@@ -881,9 +883,56 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         });
         
+        renderPlotDetectorsDropdown();
         calibrateDetectorEnergyResponse(currentHandle);
         renderTheoreticalTransmissionTable();
         renderEfficiencyPlot();
+    }
+
+    if (plotDetectorSelect) {
+        plotDetectorSelect.addEventListener("change", () => {
+            renderTransmissionFactorsTable();
+            calibrateDetectorEnergyResponse(currentHandle);
+            renderTheoreticalTransmissionTable();
+            renderEfficiencyPlot();
+        });
+    }
+
+    function renderPlotDetectorsDropdown() {
+        if (!plotDetectorSelect) return;
+        
+        const currentSelection = plotDetectorSelect.value;
+        plotDetectorSelect.innerHTML = "";
+        
+        if (!currentHandle || !userProfiles[currentHandle]) {
+            plotDetectorSelect.innerHTML = '<option value="">-- No selections available --</option>';
+            return;
+        }
+        
+        const userData = userProfiles[currentHandle];
+        const measArray = userData.measurements || [];
+        
+        const detNames = new Set();
+        measArray.forEach(m => detNames.add(m.detName));
+        
+        if (detNames.size === 0) {
+            plotDetectorSelect.innerHTML = '<option value="">-- No selections available --</option>';
+            return;
+        }
+        
+        let selectedOptionStillExists = false;
+        
+        detNames.forEach(detName => {
+            const opt = document.createElement("option");
+            opt.value = detName;
+            opt.textContent = detName;
+            plotDetectorSelect.appendChild(opt);
+            if (detName === currentSelection) selectedOptionStillExists = true;
+        });
+        
+        if (selectedOptionStillExists) {
+            plotDetectorSelect.value = currentSelection;
+        }
     }
     
     function renderTheoreticalTransmissionTable() {
@@ -1116,7 +1165,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     tr.style.borderBottom = "1px solid rgba(255,255,255,0.1)";
                     
                     const tdMat = document.createElement("td");
-                    tdMat.style.padding = "0.25rem 0";
+                    tdMat.style.padding = "0.25rem 0.5rem";
                     tdMat.textContent = att.material;
                     
                     const tdThick = document.createElement("td");
@@ -1153,9 +1202,11 @@ document.addEventListener("DOMContentLoaded", () => {
         const calIsotopeWarning = document.getElementById("cal-isotope-warning");
         if (calIsotopeWarning) calIsotopeWarning.style.display = "none";
         
+        if (measurementsTableHeading) measurementsTableHeading.textContent = "Measurements";
+        
         if (!currentHandle) {
             resetMeasurementsBtn.disabled = true;
-            measurementsTableBody.innerHTML = '<tr><td colspan="7" style="color: var(--text-muted); text-align: center; padding-top: 0.5rem;">-- Awaiting measurement data --</td></tr>';
+            measurementsTableBody.innerHTML = '<tr><td colspan="6" style="color: var(--text-muted); text-align: center; padding-top: 0.5rem;">-- Awaiting measurement data --</td></tr>';
             return;
         }
 
@@ -1165,29 +1216,34 @@ document.addEventListener("DOMContentLoaded", () => {
         const equipIdx = parseInt(equipSelect.value, 10);
         if (isNaN(equipIdx)) {
             resetMeasurementsBtn.disabled = true;
-            measurementsTableBody.innerHTML = '<tr><td colspan="7" style="color: var(--text-muted); text-align: center; padding-top: 0.5rem;">-- Select a detector --</td></tr>';
+            measurementsTableBody.innerHTML = '<tr><td colspan="6" style="color: var(--text-muted); text-align: center; padding-top: 0.5rem;">-- Select a detector --</td></tr>';
+            if (measurementsTableHeading) measurementsTableHeading.textContent = "Measurements";
             return;
         }
         
         const currDetItem = userData.equipment[equipIdx];
         if (!currDetItem) return;
         const currentDetName = typeof currDetItem === 'string' ? currDetItem : currDetItem.name;
+        
+        if (measurementsTableHeading) measurementsTableHeading.textContent = `${currentDetName} Measurements`;
 
         let allMeas = userData.measurements || [];
         const measArray = allMeas.filter(m => m.detName === currentDetName);
 
+        measArray.sort((a, b) => {
+            const srcA = a.isoText || "";
+            const srcB = b.isoText || "";
+            return srcA.localeCompare(srcB);
+        });
+
         if (measArray.length === 0) {
-            measurementsTableBody.innerHTML = '<tr><td colspan="7" style="color: var(--text-muted); text-align: center; padding-top: 0.5rem;">-- Awaiting measurement data --</td></tr>';
+            measurementsTableBody.innerHTML = '<tr><td colspan="6" style="color: var(--text-muted); text-align: center; padding-top: 0.5rem;">-- Awaiting measurement data --</td></tr>';
             resetMeasurementsBtn.disabled = true;
         } else {
             resetMeasurementsBtn.disabled = false;
             measArray.forEach(m => {
                 const tr = document.createElement("tr");
                 tr.style.borderBottom = "1px solid rgba(255,255,255,0.1)";
-                
-                const tdDet = document.createElement("td");
-                tdDet.style.padding = "0.25rem 0.5rem";
-                tdDet.textContent = m.detName;
                 
                 const tdSrc = document.createElement("td");
                 tdSrc.style.padding = "0.25rem 0.5rem";
@@ -1229,7 +1285,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 };
                 tdDel.appendChild(delBtn);
                 
-                tr.appendChild(tdDet);
                 tr.appendChild(tdSrc);
                 tr.appendChild(tdAct);
                 tr.appendChild(tdAtt);
@@ -1284,6 +1339,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         currentHandle = handleName;
         userDisplay.textContent = currentHandle;
+        loginInputGroup.style.display = "none";
+        
         saveToStorage();
         renderEquipmentDropdown();
         renderSourcesDropdown();
@@ -1319,7 +1376,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     tr.style.borderBottom = "1px solid rgba(255,255,255,0.1)";
                     
                     const tdName = document.createElement("td");
-                    tdName.style.padding = "0.25rem 0";
+                    tdName.style.padding = "0.25rem 0.5rem";
                     tdName.textContent = name;
                     
                     const tdDel = document.createElement("td");
@@ -1354,6 +1411,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
     handleInput.addEventListener("keypress", (e) => {
         if (e.key === "Enter") switchUser(handleInput.value.trim());
+    });
+    
+    userDisplay.addEventListener("click", () => {
+        loginInputGroup.style.display = "flex";
+        handleInput.focus();
+    });
+
+    // Tooltip Visibility Toggler
+    toggleTooltipsBtns.forEach(btn => {
+        btn.addEventListener("click", () => {
+            document.body.classList.toggle("show-tooltips");
+        });
     });
 
     function switchTab(activeTab, activePanel, displayStyle) {
@@ -1846,6 +1915,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // If someone was logged in last time, log them back in automatically
     if (currentHandle) {
         userDisplay.textContent = currentHandle;
+        loginInputGroup.style.display = "none";
         renderEquipmentDropdown();
         renderSourcesDropdown();
         renderUnknownSourcesUI();
@@ -1853,6 +1923,7 @@ document.addEventListener("DOMContentLoaded", () => {
         renderMeasurementsTable();
         renderRiidanceTab();
     } else {
+        loginInputGroup.style.display = "flex";
         renderEquipmentDropdown(); // Renders the disabled/guest state
         renderSourcesDropdown();
         renderUnknownSourcesUI();
