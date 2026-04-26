@@ -1,79 +1,53 @@
-# Gamma Isotope Identifier (PWA)
+# GoodRIIDance (Progressive Web App)
 
 ## Overview
-This Progressive Web App (PWA) is designed as both an educational physics tool and a functional laboratory utility. It allows users to calibrate a generic radiation rate meter using known sources, and subsequently identify unknown single gamma-emitting isotopes by applying the Beer-Lambert law of attenuation ($I = I_0 e^{-\mu x}$). 
+GoodRIIDance is a "Radiation Absorption Spectroscopy Calculator", designed as both an educational physics tool and a functional laboratory utility. It allows users to calibrate generic radiation rate meters using known sources, and subsequently identify unknown gamma-emitting isotopes by applying the Beer-Lambert law of attenuation along with detector-specific Energy Response curves.
 
-By operating entirely client-side, the app ensures that sensitive measurement data remains private and that the utility functions flawlessly in completely offline environments—such as deep within a concrete facility or a basement laboratory where cellular service is unavailable.
+By operating entirely client-side, the app ensures that sensitive measurement data (stored safely in `localStorage`) remains private and that the utility functions flawlessly in completely offline environments—such as deep within a concrete facility or a basement laboratory where cellular service is unavailable.
 
-## Architecture & Project Structure
-This application is built as a lightweight Single Page Application (SPA) using standard web technologies (HTML, CSS, JavaScript). It avoids heavy frameworks in favor of native ES6 modules for modularity and performance.
+## User Experience Workflow
+1. **Inventory Management**: 
+   - **Detectors**: Register equipment and assign specific calibration isotopes.
+   - **Known Sources**: Log known gamma sources, tracking their original activity and calculating present-day real-time activity using built-in half-life mathematical decay.
+   - **Attenuators**: Select standard materials (Lead, Aluminum, Copper, Water) with specific thicknesses.
+   - **Unknown Sources**: Create tags for mystery objects to be analyzed.
+2. **Measurement Setup**: Record unattenuated background and source activity readings for specific Detector-and-Source pairings, followed by varying iterations of shielded readings behind specific attenuator thicknesses. 
+3. **Transmission & Response**: The application utilizes a stochastic optimization algorithm (simulated annealing) to compute a dynamic efficiency response curve unique to *each individual detector* based on the entered data. Theoretical transmission tables are dynamically generated and compared against measured empirical transmission factors. 
+4. **Identification Engine (RIIDance)**: Evaluates user-provided measurements of an `Unknown Source` across multiple detectors applying the known theoretical transmission limits of every isotope in the database. Results are sorted mathematically using a Joint Mean Squared Error (JMSE) statistical analysis, yielding the highest-confidence isotope prediction.
 
-## User Experience ##
-1. This application has an inventory tab where the user can keep an equipment inventory, with user-defined names for each item, which includes:
-1.a. A list of their radiation detection equipment they have. This includes the make and model of the meter, its serial number, and the same for their detectors (if separate). 
-1.b. A list of their known radiation sources. This includes the isotope, the date at which its activity was last confirmed, and its activity at that date. 
-1.c. A list of their known attenuators. Materials will be selected from a dropdown list, and the user will input the thickness of each attenuator they possess. 
-2. The application has confirmation tab where the app prompts the user to select an item from 1.a. then asks them to select an item from 1.b. and place it at a certain distance from the detector. The user is then able to input the reading they get from the detector. The app then prompts the user to add attenuators from 1.c. one by one and input the reading they get from the detector after each addition. 
-3. The application has an identification tab where the app prompts the user to select an item from 1.a. then asks them to place their detector at a distance from an unknown source such that the meter reads a value within the range their meter is known to measure from part 2. The user is then prompted to add attenuators from 1.c. one by one and input the reading they get from the detector after each addition. The application then provides a list of possible isotopes that could be the unknown source, ranked by confidence. 
+## File Structure & Architecture
+To minimize load times and remove unnecessary complexity, GoodRIIDance is built as a lightweight, flat-architecture Single Page Application (SPA). All primary application features are cleanly housed directly in the root directory:
 
-## File Structure ##
-gamma-detector-app/
-├── index.html                      (The skeleton)
-├── css/
-│   └── styles.css                  (The skin)
-├── js/
-│   └── app.js                      (The main controller)
-├── data/
-│   └── isotope_information.json    (Isotope information database)
-├── assets/
-│   └── icon-512.png                (The app icon)
-├── manifest.json                   (PWA configuration file)
-└── sw.js                           (Service Worker for offline mode)
+```text
+/
+├── index.html                      (The dashboard structure, tabs, and layout)
+├── styles.css                      (Navy-blue branding, responsive media grids, tooltip overlays)
+├── app.js                          (Monolithic controller: UI, Physics logic)
+├── isotope_information.json        (Consolidated physics db: t_1/2, photons, Attenuation)
+├── manifest.json                   (PWA installation configuration and theme bindings)
+└── sw.js                           (Service Worker handling offline asset caching)
+```
 
-### Root Directory
+### File Breakdown
 * **`index.html`**
-  This is the single entry point for the application.
-
-* **`manifest.json`**
-  The web app manifest transforms the website into an installable application. It tells the mobile device or desktop browser the app's formal name, preferred display mode (e.g., `standalone` to hide the URL bar), background colors, and the path to the app's icons.
-
-* **`sw.js`**
-  This script runs in the background, separate from the main web page. On the initial load, it intercepts network requests and caches all necessary assets (HTML, CSS, JS, and JSON data). On subsequent visits, it serves the app directly from the local device cache, enabling absolute offline functionality.
-
-### `/css/` Directory
+  The solitary document structure for the dashboard. It features functional tabs matching the User Workflow, completely responsive twin-panel grids that collapse smoothly under 1000px for mobile interfaces, and an interactive `(?)` tooltip educational overlay tracking system.
+  
 * **`styles.css`**
-  Contains all styling rules for the application. Utilizing CSS Flexbox and Grid, this file ensures the UI is responsive. The design is mobile-first, optimizing tap targets and input fields for users holding a phone in one hand while manipulating lead attenuators and rate meters with the other.
-
-### `/js/` Directory
-The application logic is broken down into ES6 modules to separate concerns and maintain clean code.
+  Contains all styling variables dictating the modern, dark-mode sleek visual aesthetics. It handles cross-browser form modifications and cleanly stacks structural CSS grids specifically designed for responsive one-handed use environments.
 
 * **`app.js`**
-  The core orchestrator. This script is loaded by `index.html` and is responsible for bootstrapping the application. It initializes the Service Worker, fetches the `isotopes.json` database on startup, and wires together the UI event listeners with the core physics logic.
+  The "brain" of the operation. It autonomously handles:
+  - Reading/Writing to browser `localStorage` ensuring multi-session persistence.
+  - Mathematical computation of isotopic decay strings.
+  - The computationally intensive simulated annealing optimization mapping logic (`evalLoss`).
+  - Rendering DOM manipulations synchronously based on nested user interactions.
+  - Building and binding interactive arrays via `Plotly`.
 
-* **`physics.js`**
-  The computational engine. This module has no knowledge of the user interface. It exports pure functions designed to process the raw measurement data. Responsibilities include:
-  * Applying the Beer-Lambert calculations to determine experimental linear attenuation coefficients ($\mu$).
-  * Processing statistical variance and background subtraction.
-  * Running the sorting algorithm that compares user-derived attenuation curves against the known values to output a confidence-ranked list of suspected isotopes.
+* **`isotope_information.json`**
+  A dense, compiled reference matrix merging elemental properties with evaluated X-Ray energy intensities (above 30 keV) and their precise linear attenuation mass coefficients mapped for Lead, Water, Copper, and Aluminum filtering models.
 
-* **`ui.js`**
-  The DOM (Document Object Model) manipulation module. It intercepts user inputs from the HTML form fields, passes those values to `app.js` or `physics.js` for processing, and dynamically updates the screen with calculated results, error messages, or the final confidence rankings.
+* **`manifest.json` & `sw.js`**
+  The backbone of the Progressive Web App environment. `manifest.json` overrides standard browser view port framing to run the calculator in `standalone` mode (simulating a native application). `sw.js` forcefully intercepts and caches all local assets + external Plotly dependencies, enabling absolute functionality offline without any internet connection.
 
-### `/data/` Directory
-* **`isotopes.json`**
-  A structured, read-only data store containing the reference values for the physics calculations. It stores objects representing known isotopes, their specific gamma energies (in keV or MeV, only those with 10% incidence or greater). 
-  
-* **`isotopes_with_attenuation.json`**
-  An extended version of isotopes.json with the addition of linear attenuation coefficients for each of its gamma energies for a selection of 20 attenuating elements and materials.
-
-### `/assets/` Directory
-* **`icon-512.png`**
-  A high-resolution icon used by the device operating system when the user adds the application to their home screen or desktop. The `manifest.json` references this file to brand the installed PWA.
-
-## Getting Started for Development
-Because the application fetches local files (like `isotopes.json` and ES6 module imports), it cannot simply be opened via `file://` protocol in a browser due to CORS security restrictions. 
-
-To run this locally in your development environment:
-1. Navigate to the project root directory in your terminal.
-2. Spin up a lightweight local server (e.g., `python3 -m http.server 8000`).
-3. Open `http://localhost:8000` in your web browser.
+## Getting Started
+Because the application fetches local files (like the large JSON matrix) via XHR, it cannot simply be run via `file://` protocol directly from disk due to CORS security restrictions. 
