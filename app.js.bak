@@ -89,29 +89,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Load the last person who used the site on this browser
     let currentHandle = localStorage.getItem("goodriidanceLastUser") || null;
 
-
-    // --- Block 3: Utility/Helper Functions ---
-    function createCell(text, align = "left", isHTML = false) {
-        const td = document.createElement("td");
-        td.style.padding = "0.25rem 0.5rem";
-        td.style.textAlign = align;
-        if (isHTML) {
-            td.innerHTML = text;
-        } else {
-            td.textContent = text;
-        }
-        return td;
-    }
-
-    function getIsotopeData(isoString) {
-        if (!isotopesData || isotopesData.length === 0) return null;
-        const parts = isoString.split('-');
-        if (parts.length !== 2) return null;
-        const aNum = parseInt(parts[0], 10);
-        const elStr = parts[1].toUpperCase();
-        return isotopesData.find(i => i.A === aNum && i.Element.toUpperCase() === elStr) || null;
-    }
-
+    // --- Functions ---
 
     function saveToStorage() {
         localStorage.setItem("goodriidanceProfiles", JSON.stringify(userProfiles));
@@ -169,9 +147,13 @@ document.addEventListener("DOMContentLoaded", () => {
                     const tr = document.createElement("tr");
                     tr.style.borderBottom = "1px solid rgba(255,255,255,0.1)";
                     
-                    const tdName = createCell(name);
+                    const tdName = document.createElement("td");
+                    tdName.style.padding = "0.25rem 0.5rem";
+                    tdName.textContent = name;
                     
-                    const tdCal = createCell(calibRaw); // Safely writes unicode explicitly
+                    const tdCal = document.createElement("td");
+                    tdCal.style.padding = "0.25rem 0";
+                    tdCal.textContent = calibRaw; // Safely writes unicode explicitly
                     
                     const tdDel = document.createElement("td");
                     tdDel.style.padding = "0.25rem 0";
@@ -292,9 +274,14 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!eq) return coeffs;
 
         const calib = typeof eq === 'string' ? "137-cs" : (eq.calib || "137-cs"); 
-        const matched = getIsotopeData(calib);
+        const parts = calib.split('-');
         let calEnergy = 0;
-        if (matched && matched.Radiations) {
+        
+        if (parts.length === 2 && typeof isotopesData !== 'undefined' && isotopesData.length > 0) {
+            const aNum = parseInt(parts[0], 10);
+            const elStr = parts[1].toUpperCase();
+            const matched = isotopesData.find(i => i.A === aNum && i.Element.toUpperCase() === elStr);
+            if (matched && matched.Radiations) {
                 let maxI = -1;
                 matched.Radiations.forEach(r => {
                     if (parseFloat(r.Energy) >= 30 && parseFloat(r.Intensity) > maxI) {
@@ -303,6 +290,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
                 });
             }
+        }
         coeffs.calEnergy = calEnergy;
         if (calEnergy < 30) return coeffs;
         
@@ -321,7 +309,13 @@ document.addEventListener("DOMContentLoaded", () => {
             const avgY = sumY / baseMeasures.length;
             if (avgY <= 0) return;
             
-            const mIso = getIsotopeData(src.isotope);
+            const ps = src.isotope.split('-');
+            let mIso = null;
+            if (ps.length === 2 && typeof isotopesData !== 'undefined') {
+                const aN = parseInt(ps[0], 10);
+                const eS = ps[1].toUpperCase();
+                mIso = isotopesData.find(i => i.A === aN && i.Element.toUpperCase() === eS);
+            }
             if (!mIso || !mIso.Radiations) return;
             const radsSrc = mIso.Radiations.filter(r => parseFloat(r.Energy) >= 30 && r["Attenuation_cm-1"]);
             if (radsSrc.length === 0) return;
@@ -406,16 +400,22 @@ document.addEventListener("DOMContentLoaded", () => {
         const eq = userData.equipment.find(e => (typeof e === 'string' ? e : e.name) === detName);
         if (!eq) return;
         const calib = typeof eq === 'string' ? "137-cs" : (eq.calib || "137-cs"); 
-        const matched = getIsotopeData(calib);
+        const parts = calib.split('-');
         let calEnergy = 0;
-        if (matched && matched.Radiations) {
-            let maxI = -1;
-            matched.Radiations.forEach(r => {
-                if (parseFloat(r.Energy) >= 30 && parseFloat(r.Intensity) > maxI) {
-                    maxI = parseFloat(r.Intensity);
-                    calEnergy = parseFloat(r.Energy);
-                }
-            });
+        
+        if (parts.length === 2 && typeof isotopesData !== 'undefined' && isotopesData.length > 0) {
+            const aNum = parseInt(parts[0], 10);
+            const elStr = parts[1].toUpperCase();
+            const matched = isotopesData.find(i => i.A === aNum && i.Element.toUpperCase() === elStr);
+            if (matched && matched.Radiations) {
+                let maxI = -1;
+                matched.Radiations.forEach(r => {
+                    if (parseFloat(r.Energy) >= 30 && parseFloat(r.Intensity) > maxI) {
+                        maxI = parseFloat(r.Intensity);
+                        calEnergy = parseFloat(r.Energy);
+                    }
+                });
+            }
         }
         
         currentEfficiencyCoeffs.calEnergy = calEnergy;
@@ -437,7 +437,13 @@ document.addEventListener("DOMContentLoaded", () => {
             const avgY = sumY / baseMeasures.length;
             if (avgY <= 0) return;
             
-            const mIso = getIsotopeData(src.isotope);
+            const ps = src.isotope.split('-');
+            let mIso = null;
+            if (ps.length === 2 && typeof isotopesData !== 'undefined') {
+                const aN = parseInt(ps[0], 10);
+                const eS = ps[1].toUpperCase();
+                mIso = isotopesData.find(i => i.A === aN && i.Element.toUpperCase() === eS);
+            }
             if (!mIso || !mIso.Radiations) return;
             const radsSrc = mIso.Radiations.filter(r => parseFloat(r.Energy) >= 30 && r["Attenuation_cm-1"]);
             if (radsSrc.length === 0) return;
@@ -600,8 +606,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function calculateCurrentActivity(src) {
         let currentActivity = src.activity;
-        const matchedIso = getIsotopeData(src.isotope);
-        if (matchedIso && matchedIso["Half life"]) {
+        const parts = src.isotope.split('-');
+        if (parts.length === 2 && isotopesData.length > 0) {
+            const aNum = parseInt(parts[0], 10);
+            const elStr = parts[1].toUpperCase();
+            const matchedIso = isotopesData.find(iso => iso.A === aNum && iso.Element.toUpperCase() === elStr);
+            if (matchedIso && matchedIso["Half life"]) {
                 let hlSecs = matchedIso["Half life"];
                 if (typeof hlSecs === "string") {
                     const hStr = hlSecs.toLowerCase();
@@ -617,6 +627,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 const elapsedSeconds = (new Date() - new Date(src.datetime)) / 1000;
                 // Activity = A_0 * (0.5)^(t/(Half life))
                 currentActivity = src.activity * Math.pow(0.5, elapsedSeconds / hlSecs);
+            }
         }
         return currentActivity;
     }
@@ -699,10 +710,18 @@ document.addEventListener("DOMContentLoaded", () => {
                         const tr = document.createElement("tr");
                         tr.style.borderBottom = "1px solid rgba(255,255,255,0.1)";
                         
-                        const tdIso = createCell(isoText);
-                        const tdA0 = createCell(formatActivity(src.activity));
-                        const tdDate = createCell(dateFixed);
-                        const tdAct = createCell(formatActivity(curAct));
+                        const tdIso = document.createElement("td");
+                        tdIso.style.padding = "0.25rem 0.5rem";
+                        tdIso.textContent = isoText;
+                        const tdA0 = document.createElement("td");
+                        tdA0.style.padding = "0.25rem 0";
+                        tdA0.textContent = formatActivity(src.activity);
+                        const tdDate = document.createElement("td");
+                        tdDate.style.padding = "0.25rem 0";
+                        tdDate.textContent = dateFixed;
+                        const tdAct = document.createElement("td");
+                        tdAct.style.padding = "0.25rem 0";
+                        tdAct.textContent = formatActivity(curAct);
                         
                         const tdDel = document.createElement("td");
                         tdDel.style.padding = "0.25rem 0";
@@ -809,18 +828,24 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
                 
                 if (aIdx === 0) {
-                    const tdSrc = createCell(isoStrFormatted);
+                    const tdSrc = document.createElement("td");
+                    tdSrc.style.padding = "0.25rem 0.5rem";
+                    tdSrc.textContent = isoStrFormatted;
                     tdSrc.rowSpan = rowCount;
                     tdSrc.style.verticalAlign = "top";
                     tr.appendChild(tdSrc);
                     
-                    const tdAct = createCell(actStr);
+                    const tdAct = document.createElement("td");
+                    tdAct.style.padding = "0.25rem 0.5rem";
+                    tdAct.textContent = actStr;
                     tdAct.rowSpan = rowCount;
                     tdAct.style.verticalAlign = "top";
                     tr.appendChild(tdAct);
                 }
                 
-                const tdAtt = createCell(attStr);
+                const tdAtt = document.createElement("td");
+                tdAtt.style.padding = "0.25rem 0.5rem";
+                tdAtt.textContent = attStr;
                 tr.appendChild(tdAtt);
                 
                 const tdT = document.createElement("td");
@@ -994,7 +1019,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     tr.style.borderBottom = "1px solid rgba(255,255,255,0.1)";
                 }
                 
-                const tdAtt = createCell(attObj.str);
+                const tdAtt = document.createElement("td");
+                tdAtt.style.padding = "0.25rem 0.5rem";
+                tdAtt.textContent = attObj.str;
                 tr.appendChild(tdAtt);
                 
                 chunk.forEach(isoObj => {
@@ -1118,9 +1145,13 @@ document.addEventListener("DOMContentLoaded", () => {
                     
                     tdCb.appendChild(cb);
                     
-                    const tdMat = createCell(att.material);
+                    const tdMat = document.createElement("td");
+                    tdMat.style.padding = "0.25rem 0";
+                    tdMat.textContent = att.material;
                     
-                    const tdThick = createCell(att.thickness); 
+                    const tdThick = document.createElement("td");
+                    tdThick.style.padding = "0.25rem 0";
+                    tdThick.textContent = att.thickness; 
                     
                     tr.appendChild(tdCb);
                     tr.appendChild(tdMat);
@@ -1133,9 +1164,13 @@ document.addEventListener("DOMContentLoaded", () => {
                     const tr = document.createElement("tr");
                     tr.style.borderBottom = "1px solid rgba(255,255,255,0.1)";
                     
-                    const tdMat = createCell(att.material);
+                    const tdMat = document.createElement("td");
+                    tdMat.style.padding = "0.25rem 0.5rem";
+                    tdMat.textContent = att.material;
                     
-                    const tdThick = createCell(att.thickness); 
+                    const tdThick = document.createElement("td");
+                    tdThick.style.padding = "0.25rem 0";
+                    tdThick.textContent = att.thickness; 
                     
                     const tdDel = document.createElement("td");
                     tdDel.style.padding = "0.25rem 0";
@@ -1210,9 +1245,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 const tr = document.createElement("tr");
                 tr.style.borderBottom = "1px solid rgba(255,255,255,0.1)";
                 
-                const tdSrc = createCell(m.isoText);
+                const tdSrc = document.createElement("td");
+                tdSrc.style.padding = "0.25rem 0.5rem";
+                tdSrc.textContent = m.isoText;
                 
-                const tdAct = createCell(m.actStr);
+                const tdAct = document.createElement("td");
+                tdAct.style.padding = "0.25rem 0.5rem";
+                tdAct.textContent = m.actStr;
                 
                 const tdAtt = document.createElement("td");
                 tdAtt.style.padding = "0.25rem 0.5rem";
@@ -1221,9 +1260,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 tdAtt.style.maxWidth = "200px";
                 tdAtt.textContent = m.attenStr;
                 
-                const tdDist = createCell(m.dist.toString());
+                const tdDist = document.createElement("td");
+                tdDist.style.padding = "0.25rem 0.5rem";
+                tdDist.textContent = m.dist.toString();
                 
-                const tdRead = createCell(m.netReading);
+                const tdRead = document.createElement("td");
+                tdRead.style.padding = "0.25rem 0.5rem";
+                tdRead.textContent = m.netReading;
                 
                 const tdDel = document.createElement("td");
                 tdDel.style.padding = "0.25rem 0";
@@ -1332,7 +1375,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     const tr = document.createElement("tr");
                     tr.style.borderBottom = "1px solid rgba(255,255,255,0.1)";
                     
-                    const tdName = createCell(name);
+                    const tdName = document.createElement("td");
+                    tdName.style.padding = "0.25rem 0.5rem";
+                    tdName.textContent = name;
                     
                     const tdDel = document.createElement("td");
                     tdDel.style.padding = "0.25rem 0";
@@ -1378,16 +1423,6 @@ document.addEventListener("DOMContentLoaded", () => {
         btn.addEventListener("click", () => {
             document.body.classList.toggle("show-tooltips");
         });
-    });
-    
-    // Quick-Dismiss Tooltips via Interaction
-    document.addEventListener("click", (e) => {
-        if (document.body.classList.contains("show-tooltips")) {
-            if (e.target.closest(".toggle-tooltips-btn")) return;
-            if (e.target.closest("[title]")) {
-                document.body.classList.remove("show-tooltips");
-            }
-        }
     });
 
     function switchTab(activeTab, activePanel, displayStyle) {

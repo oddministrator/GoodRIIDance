@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GoodRIIDance | Shielding Calculator</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#003057">
+    <link rel="apple-touch-icon" href="icon-512.png">
 </head>
 <body>
     <div class="app-container">
@@ -389,5 +392,18 @@
 
     <script src="https://cdn.plot.ly/plotly-2.32.0.min.js" charset="utf-8"></script>
     <script src="app.js"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js')
+            .then(registration => {
+              console.log('ServiceWorker registration successful with scope: ', registration.scope);
+            })
+            .catch(err => {
+              console.log('ServiceWorker registration failed: ', err);
+            });
+        });
+      }
+    </script>
 </body>
 </html>
