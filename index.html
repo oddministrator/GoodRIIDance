@@ -299,20 +299,21 @@
                     <table id="riidance-table" style="width: 100%; border-collapse: collapse; font-size: 0.9rem; text-align: left; color: var(--text-main);">
                         <thead>
                             <tr style="color: var(--text-muted); border-bottom: 1px solid var(--border);">
-                                <th style="padding: 0.25rem 0.5rem; width: 10%;">Rank</th>
-                                <th style="padding: 0.25rem 0.5rem; width: 30%;">Isotope Name</th>
-                                <th style="padding: 0.25rem 0.5rem; width: 30%;">Match Score (SSE)</th>
-                                <th style="padding: 0.25rem 0.5rem; width: 30%;">Dominant Energy</th>
+                                <th style="padding: 0.25rem 0.5rem; width: 5%;">Rank</th>
+                                <th style="padding: 0.25rem 0.5rem; width: 15%;">Isotope Name</th>
+                                <th style="padding: 0.25rem 0.5rem; width: 20%;">Score (JMSE)</th>
+                                <th style="padding: 0.25rem 0.5rem; width: 20%;">Dominant Energy</th>
+                                <th style="padding: 0.25rem 0.5rem; width: 40%;">Detectors Evaluated</th>
                             </tr>
                         </thead>
                         <tbody id="riidance-table-body">
-                            <tr><td colspan="4" style="color: var(--text-muted); text-align: center; padding-top: 0.5rem;">-- Select an Unknown Source --</td></tr>
+                            <tr><td colspan="5" style="color: var(--text-muted); text-align: center; padding-top: 0.5rem;">-- Select an Unknown Source --</td></tr>
                         </tbody>
                     </table>
                 </div>
                 
                 <div style="margin-top: 1rem; color: var(--text-muted); font-size: 0.8rem; font-style: italic;">
-                    Note: Isotopes with similar primary energies will have similar transmission profiles. Use half-life and source history to determine the final identity.
+                    Note: The Composite Match Score evaluates how well an isotope aligns with the physical energy response of all utilized detectors. Isotopes with similar primary energies will exhibit similar profiles.
                 </div>
             </section>
 

@@ -252,12 +252,136 @@ document.addEventListener("DOMContentLoaded", () => {
     let currentCalibPoints = [];
 
     function getEpsilon(E) {
+        return computeEpsilon(E, currentEfficiencyCoeffs);
+    }
+
+    function computeEpsilon(E, coeffs) {
         if (E < 30) return 0.0;
-        const {a, b, c, d} = currentEfficiencyCoeffs;
+        const {a, b, c, d} = coeffs;
         if (a === 0 && b === 0 && c === 0 && d === 0) return 1.0;
         const lnE = Math.log(E);
         const lnEps = a + b * lnE + c * Math.pow(lnE, 2) + d * Math.pow(lnE, 3);
         return Math.exp(lnEps);
+    }
+
+    function getEpsilonCoeffsForDetector(userData, currentDetName) {
+        const coeffs = { a: 0, b: 0, c: 0, d: 0, calEnergy: 0 };
+        const eq = userData.equipment.find(e => (typeof e === 'string' ? e : e.name) === currentDetName);
+        if (!eq) return coeffs;
+
+        const calib = typeof eq === 'string' ? "137-cs" : (eq.calib || "137-cs"); 
+        const parts = calib.split('-');
+        let calEnergy = 0;
+        
+        if (parts.length === 2 && typeof isotopesData !== 'undefined' && isotopesData.length > 0) {
+            const aNum = parseInt(parts[0], 10);
+            const elStr = parts[1].toUpperCase();
+            const matched = isotopesData.find(i => i.A === aNum && i.Element.toUpperCase() === elStr);
+            if (matched && matched.Radiations) {
+                let maxI = -1;
+                matched.Radiations.forEach(r => {
+                    if (parseFloat(r.Energy) >= 30 && parseFloat(r.Intensity) > maxI) {
+                        maxI = parseFloat(r.Intensity);
+                        calEnergy = parseFloat(r.Energy);
+                    }
+                });
+            }
+        }
+        coeffs.calEnergy = calEnergy;
+        if (calEnergy < 30) return coeffs;
+        
+        const lnE_cal = Math.log(calEnergy);
+        const observations = []; 
+        const measArray = (userData.measurements || []).filter(m => m.detName === currentDetName);
+        
+        if (!userData.sources) return coeffs;
+        
+        userData.sources.forEach(src => {
+            const isoText = formatIsotopeStr(src.isotope);
+            const baseMeasures = measArray.filter(m => m.isoText === isoText && m.attenStr === "None");
+            if (baseMeasures.length === 0) return;
+            let sumY = 0;
+            baseMeasures.forEach(m => sumY += parseFloat(m.netReading) * Math.pow(parseFloat(m.dist)/100.0, 2));
+            const avgY = sumY / baseMeasures.length;
+            if (avgY <= 0) return;
+            
+            const ps = src.isotope.split('-');
+            let mIso = null;
+            if (ps.length === 2 && typeof isotopesData !== 'undefined') {
+                const aN = parseInt(ps[0], 10);
+                const eS = ps[1].toUpperCase();
+                mIso = isotopesData.find(i => i.A === aN && i.Element.toUpperCase() === eS);
+            }
+            if (!mIso || !mIso.Radiations) return;
+            const radsSrc = mIso.Radiations.filter(r => parseFloat(r.Energy) >= 30 && r["Attenuation_cm-1"]);
+            if (radsSrc.length === 0) return;
+            
+            if (!userData.attenuators) return;
+            userData.attenuators.forEach(attStrObj => {
+                const attStrFormatted = `${attStrObj.material} ${attStrObj.thickness}cm`;
+                const attMeasures = measArray.filter(m => m.isoText === isoText && m.attenStr === attStrFormatted);
+                if (attMeasures.length === 0) return;
+                let sumX = 0;
+                attMeasures.forEach(m => sumX += parseFloat(m.netReading) * Math.pow(parseFloat(m.dist)/100.0, 2));
+                const avgX = sumX / attMeasures.length;
+                const tExp = avgX / avgY;
+                
+                const rads = [];
+                radsSrc.forEach(r => {
+                    if (r["Attenuation_cm-1"][attStrObj.material]) {
+                        const en = parseFloat(r.Energy);
+                        const intensity = parseFloat(r.Intensity);
+                        rads.push({
+                            I: intensity / 100.0,
+                            E: en,
+                            mu: parseFloat(r["Attenuation_cm-1"][attStrObj.material]),
+                            x: parseFloat(attStrObj.thickness)
+                        });
+                    }
+                });
+                if (rads.length > 0) {
+                    observations.push({ rads, tExp });
+                }
+            });
+        });
+        
+        if (observations.length === 0) return coeffs;
+        
+        function evalLoss(b, c, d) {
+            let loss = 0;
+            for (const obs of observations) {
+                let sumA = 0; let sumB = 0;
+                for (const r of obs.rads) {
+                    const lnE = Math.log(r.E);
+                    const lnEps = b*(lnE - lnE_cal) + c*(Math.pow(lnE, 2) - Math.pow(lnE_cal, 2)) + d*(Math.pow(lnE, 3) - Math.pow(lnE_cal, 3));
+                    const eps = Math.exp(lnEps);
+                    sumA += r.I * eps * Math.exp(-r.mu * r.x);
+                    sumB += r.I * eps;
+                }
+                if (sumB === 0) return Infinity; 
+                const tTheo = sumA / sumB;
+                loss += Math.pow(tTheo - obs.tExp, 2);
+            }
+            return loss;
+        }
+        
+        let bestB = 0, bestC = 0, bestD = 0;
+        let bestLoss = evalLoss(bestB, bestC, bestD);
+        let temp = 1.0;
+        for (let i = 0; i < 5000; i++) {
+            const testB = bestB + (Math.random() - 0.5) * temp;
+            const testC = bestC + (Math.random() - 0.5) * temp * 0.1;
+            const testD = bestD + (Math.random() - 0.5) * temp * 0.01;
+            const l = evalLoss(testB, testC, testD);
+            if (l < bestLoss) {
+                bestLoss = l; bestB = testB; bestC = testC; bestD = testD;
+            }
+            temp *= 0.999;
+        }
+        
+        coeffs.b = bestB; coeffs.c = bestC; coeffs.d = bestD;
+        coeffs.a = -(bestB * lnE_cal + bestC * Math.pow(lnE_cal, 2) + bestD * Math.pow(lnE_cal, 3));
+        return coeffs;
     }
 
     function calibrateDetectorEnergyResponse(handleName) {
@@ -1540,50 +1664,57 @@ document.addEventListener("DOMContentLoaded", () => {
         const userData = userProfiles[currentHandle];
         const unknownName = userData.unknownSources[unknownIdx];
         
-        const equipIdx = parseInt(document.getElementById("equipment-select").value, 10);
-        if (isNaN(equipIdx) || !userData.equipment || !userData.equipment[equipIdx]) {
-             riidanceTableBody.innerHTML = '<tr><td colspan="4" style="color: var(--text-muted); text-align: center; padding-top: 0.5rem;">-- Error: Calibration Issue --</td></tr>';
-             return;
-        }
-        const currDetItem = userData.equipment[equipIdx];
-        const currentDetName = typeof currDetItem === 'string' ? currDetItem : currDetItem.name;
+        const allUnkMeas = (userData.measurements || []).filter(m => m.isoText === unknownName);
         
-        const measArray = (userData.measurements || []).filter(m => m.detName === currentDetName && m.isoText === unknownName);
+        const unkMeasuresByDet = {};
+        allUnkMeas.forEach(m => {
+            if (!unkMeasuresByDet[m.detName]) unkMeasuresByDet[m.detName] = [];
+            unkMeasuresByDet[m.detName].push(m);
+        });
         
-        const baseMeasures = measArray.filter(m => m.attenStr === "None");
-        if (baseMeasures.length === 0) {
-            riidanceTableBody.innerHTML = '<tr><td colspan="4" style="color: var(--text-muted); text-align: center; padding-top: 0.5rem;">-- No physical unattenuated (baseline) reading found for this source --</td></tr>';
-            return;
-        }
-        let sumY = 0;
-        baseMeasures.forEach(m => sumY += parseFloat(m.netReading) * Math.pow(parseFloat(m.dist)/100.0, 2));
-        const avgY = sumY / baseMeasures.length;
-        if (avgY <= 0) {
-            riidanceTableBody.innerHTML = '<tr><td colspan="4" style="color: var(--text-muted); text-align: center; padding-top: 0.5rem;">-- Baseline reading invalid --</td></tr>';
-            return;
-        }
-
-        const activeAttenuators = [];
-        if (userData.attenuators) {
-            userData.attenuators.forEach(att => {
-                const attFormatted = `${att.material} ${att.thickness}cm`;
-                const attMeasures = measArray.filter(m => m.attenStr === attFormatted);
-                if (attMeasures.length > 0) {
-                    let sumX = 0;
-                    attMeasures.forEach(m => sumX += parseFloat(m.netReading) * Math.pow(parseFloat(m.dist)/100.0, 2));
-                    const avgX = sumX / attMeasures.length;
-                    const tExp = avgX / avgY;
-                    activeAttenuators.push({
-                        material: att.material,
-                        thickness: parseFloat(att.thickness),
-                        tExp: tExp
-                    });
-                }
+        const activeDetectorsData = [];
+        
+        for (const detName in unkMeasuresByDet) {
+            const measArr = unkMeasuresByDet[detName];
+            const baseMeasures = measArr.filter(m => m.attenStr === "None");
+            if (baseMeasures.length === 0) continue;
+            
+            let sumY = 0;
+            baseMeasures.forEach(m => sumY += parseFloat(m.netReading) * Math.pow(parseFloat(m.dist)/100.0, 2));
+            const avgY = sumY / baseMeasures.length;
+            if (avgY <= 0) continue;
+            
+            const activeAtts = [];
+            if (userData.attenuators) {
+                userData.attenuators.forEach(att => {
+                    const attFormatted = `${att.material} ${att.thickness}cm`;
+                    const attMeasures = measArr.filter(m => m.attenStr === attFormatted);
+                    if (attMeasures.length > 0) {
+                        let sumX = 0;
+                        attMeasures.forEach(m => sumX += parseFloat(m.netReading) * Math.pow(parseFloat(m.dist)/100.0, 2));
+                        const avgX = sumX / attMeasures.length;
+                        const tExp = avgX / avgY;
+                        activeAtts.push({
+                            material: att.material,
+                            thickness: parseFloat(att.thickness),
+                            tExp: tExp
+                        });
+                    }
+                });
+            }
+            if (activeAtts.length === 0) continue;
+            
+            const coeffs = getEpsilonCoeffsForDetector(userData, detName);
+            
+            activeDetectorsData.push({
+                detName: detName,
+                coeffs: coeffs,
+                activeAtts: activeAtts
             });
         }
         
-        if (activeAttenuators.length === 0) {
-            riidanceTableBody.innerHTML = '<tr><td colspan="4" style="color: var(--text-muted); text-align: center; padding-top: 0.5rem;">-- Need measurements with attenuators to run engine --</td></tr>';
+        if (activeDetectorsData.length === 0) {
+            riidanceTableBody.innerHTML = '<tr><td colspan="5" style="color: var(--text-muted); text-align: center; padding-top: 0.5rem;">-- Need baseline + attenuator measurements for at least one detector --</td></tr>';
             return;
         }
 
@@ -1603,52 +1734,67 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             });
             
-            let sse = 0;
+            let jmse = 0;
             let validComplete = true;
+            let contributingDetectors = [];
             
-            activeAttenuators.forEach(att => {
-                const radsAtt = radsTemplate.filter(r => r["Attenuation_cm-1"][att.material]);
-                if (radsAtt.length === 0) {
-                    validComplete = false;
-                    return;
-                }
+            activeDetectorsData.forEach(detData => {
+                let detSSE = 0;
+                let detValid = true;
                 
-                let sumA = 0;
-                let sumB = 0;
-                radsAtt.forEach(r => {
-                    const intensity = parseFloat(r.Intensity) / 100.0;
-                    const energy = parseFloat(r.Energy);
-                    const mu = parseFloat(r["Attenuation_cm-1"][att.material]);
-                    const eps = getEpsilon(energy);
-                    sumA += intensity * eps * Math.exp(-mu * att.thickness);
-                    sumB += intensity * eps;
+                detData.activeAtts.forEach(att => {
+                    const radsAtt = radsTemplate.filter(r => r["Attenuation_cm-1"][att.material]);
+                    if (radsAtt.length === 0) {
+                        detValid = false;
+                        return;
+                    }
+                    
+                    let sumA = 0;
+                    let sumB = 0;
+                    radsAtt.forEach(r => {
+                        const intensity = parseFloat(r.Intensity) / 100.0;
+                        const energy = parseFloat(r.Energy);
+                        const mu = parseFloat(r["Attenuation_cm-1"][att.material]);
+                        const eps = computeEpsilon(energy, detData.coeffs);
+                        sumA += intensity * eps * Math.exp(-mu * att.thickness);
+                        sumB += intensity * eps;
+                    });
+                    
+                    if (sumB === 0) {
+                        detValid = false;
+                        return;
+                    }
+                    
+                    const tTheo = sumA / sumB;
+                    detSSE += Math.pow(att.tExp - tTheo, 2);
                 });
                 
-                if (sumB === 0) {
+                if (!detValid) {
                     validComplete = false;
-                    return;
+                } else {
+                    const mse = detSSE / detData.activeAtts.length;
+                    jmse += mse;
+                    contributingDetectors.push(detData.detName);
                 }
-                
-                const tTheo = sumA / sumB;
-                sse += Math.pow(att.tExp - tTheo, 2);
             });
             
-            if (validComplete) {
+            if (validComplete && contributingDetectors.length > 0) {
                 scores.push({
                     name: `${iso.A}-${iso.Element}`,
-                    sse: sse,
-                    domEnergy: domEnergy
+                    jmse: jmse,
+                    domEnergy: domEnergy,
+                    detectorsStr: contributingDetectors.join(", ")
                 });
             }
         });
         
-        scores.sort((a,b) => a.sse - b.sse);
+        scores.sort((a,b) => a.jmse - b.jmse);
         const top20 = scores.slice(0, 20);
         
         riidanceTableBody.innerHTML = "";
         
         if (top20.length === 0) {
-            riidanceTableBody.innerHTML = '<tr><td colspan="4" style="color: var(--text-muted); text-align: center; padding-top: 0.5rem;">-- No valid isotopes found --</td></tr>';
+            riidanceTableBody.innerHTML = '<tr><td colspan="5" style="color: var(--text-muted); text-align: center; padding-top: 0.5rem;">-- No valid isotopes found --</td></tr>';
             return;
         }
 
@@ -1674,16 +1820,23 @@ document.addEventListener("DOMContentLoaded", () => {
             
             const tdScore = document.createElement("td");
             tdScore.style.padding = "0.4rem 0.5rem";
-            tdScore.textContent = item.sse < 0.0001 ? item.sse.toExponential(3) : item.sse.toFixed(5);
+            tdScore.textContent = item.jmse < 0.0001 ? item.jmse.toExponential(3) : item.jmse.toFixed(5);
             
             const tdDom = document.createElement("td");
             tdDom.style.padding = "0.4rem 0.5rem";
             tdDom.textContent = item.domEnergy.toFixed(1) + " keV";
             
+            const tdDet = document.createElement("td");
+            tdDet.style.padding = "0.4rem 0.5rem";
+            tdDet.style.fontSize = "0.8rem";
+            tdDet.style.color = "var(--text-muted)";
+            tdDet.textContent = item.detectorsStr;
+            
             tr.appendChild(tdRank);
             tr.appendChild(tdName);
             tr.appendChild(tdScore);
             tr.appendChild(tdDom);
+            tr.appendChild(tdDet);
             
             riidanceTableBody.appendChild(tr);
         });
