@@ -1897,5 +1897,47 @@ document.addEventListener("DOMContentLoaded", () => {
         renderRiidanceTab();
     }
 
+    // --- PWA Installation Logic ---
+    let deferredPrompt;
+    const installAppBtn = document.getElementById('install-app-btn');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        // Prevent the mini-infobar from appearing on mobile
+        e.preventDefault();
+        // Stash the event so it can be triggered later.
+        deferredPrompt = e;
+        // Update UI notify the user they can install the PWA
+        if (installAppBtn) {
+            installAppBtn.style.display = 'inline-block';
+        }
+    });
+
+    if (installAppBtn) {
+        installAppBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                // Show the install prompt
+                deferredPrompt.prompt();
+                // Wait for the user to respond to the prompt
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    console.log('User accepted the install prompt');
+                } else {
+                    console.log('User dismissed the install prompt');
+                }
+                // We've used the prompt, and can't use it again, throw it away
+                deferredPrompt = null;
+                installAppBtn.style.display = 'none';
+            }
+        });
+    }
+
+    window.addEventListener('appinstalled', () => {
+        // Hide the app-provided install promotion
+        if (installAppBtn) {
+            installAppBtn.style.display = 'none';
+        }
+        deferredPrompt = null;
+        console.log('PWA was installed');
+    });
 
 });
