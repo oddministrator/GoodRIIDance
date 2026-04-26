@@ -18,19 +18,17 @@ This application is built as a lightweight Single Page Application (SPA) using s
 
 ## File Structure ##
 gamma-detector-app/
-├── index.html          (The skeleton)
+├── index.html                      (The skeleton)
 ├── css/
-│   └── styles.css      (The skin)
+│   └── styles.css                  (The skin)
 ├── js/
-│   ├── app.js          (The main controller)
-│   ├── physics.js      (The math and logic)
-│   └── ui.js           (The interface handler)
+│   └── app.js                      (The main controller)
 ├── data/
-│   └── isotopes.json   (Your attenuation database)
+│   └── isotope_information.json    (Isotope information database)
 ├── assets/
-│   └── icon-512.png    (The app icon)
-├── manifest.json       (PWA configuration file)
-└── sw.js               (Service Worker for offline mode)
+│   └── icon-512.png                (The app icon)
+├── manifest.json                   (PWA configuration file)
+└── sw.js                           (Service Worker for offline mode)
 
 ### Root Directory
 * **`index.html`**

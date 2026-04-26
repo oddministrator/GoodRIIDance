@@ -129,6 +129,12 @@ select:disabled, input:disabled {
     cursor: not-allowed;
 }
 
+table {
+    background-color: var(--navy-blue);
+    border-radius: var(--border-radius);
+    overflow: hidden; /* ensures border radius wraps content properly */
+}
+
 /* Profile and Equipment Input Styles */
 .input-group {
     display: flex;
@@ -291,4 +297,14 @@ select:disabled, input:disabled {
 
 .delete-btn:hover {
     opacity: 0.7;
+}
+
+/* Hide number input spinners globally */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+input[type="number"] {
+    -moz-appearance: textfield;
 }
