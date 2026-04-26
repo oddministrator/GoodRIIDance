@@ -13,17 +13,19 @@
     <div class="app-container">
         <header class="app-header">
             <div class="header-left">
-                <div class="top-left-profile">
-                    <p class="status-text" id="user-status"><span title="Profiles, their inventories, and measurements are stored locally on your device. They are not unique. Create as many as you wish." style="cursor: help;">Profile:</span> <strong id="current-user-display" style="cursor: pointer; text-decoration: underline; text-decoration-style: dotted;">Guest</strong></p>
-                    <div class="input-group" id="login-input-group">
-                        <input type="text" id="handle-input" class="small-input" placeholder="Enter handle...">
-                        <button id="login-btn" class="small-btn">Load</button>
-                    </div>
-                </div>
             </div>
             <div class="header-center">
                 <h1>GoodRIIDance</h1>
                 <p>Radiation Absorption Spectroscopy Calculator</p>
+                
+                <div style="display: flex; flex-direction: row; justify-content: center; align-items: center; gap: 0.75rem; margin-top: 0.5rem; margin-bottom: 0.5rem;">
+                    <p class="status-text" id="user-status" style="margin: 0; display: inline-flex; align-items: center; gap: 0.25rem;"><span title="Profiles, their inventories, and measurements are stored locally on your device. They are not unique. Create as many as you wish." style="cursor: help;">Profile:</span> <strong id="current-user-display" style="cursor: pointer; text-decoration: underline; text-decoration-style: dotted;">Guest</strong></p>
+                    <div class="input-group" id="login-input-group" style="margin: 0; align-items: center;">
+                        <input type="text" id="handle-input" class="small-input" placeholder="Enter handle..." style="width: 140px;">
+                        <button id="login-btn" class="small-btn">Load</button>
+                    </div>
+                </div>
+
                 <nav class="app-tabs">
                     <button class="tab-btn active" id="tab-inventory">Inventory</button>
                     <button class="tab-btn" id="tab-measurements">Measurement</button>
