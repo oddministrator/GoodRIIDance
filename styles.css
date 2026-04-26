@@ -49,13 +49,14 @@ body {
 .app-header {
     display: grid;
     grid-template-columns: 1fr auto 1fr;
-    align-items: center;
-    margin-bottom: 2rem;
+    align-items: end;
+    margin-bottom: 0;
 }
 
 .header-left {
     display: flex;
     justify-content: flex-start;
+    padding-bottom: 2rem;
 }
 
 .header-center {
@@ -64,6 +65,7 @@ body {
 
 .header-right {
     display: flex;
+    padding-bottom: 2rem;
 }
 
 .app-header h1 {
@@ -225,7 +227,7 @@ table {
     flex-direction: column;
     gap: 0.25rem;
     width: 100%;
-    max-width: 250px;
+    max-width: 130px;
 }
 
 .top-left-profile .status-text {
@@ -249,7 +251,9 @@ table {
     margin-top: 1rem;
     display: flex;
     justify-content: center;
-    gap: 1rem;
+    margin-bottom: -1px;
+    position: relative;
+    z-index: 10;
 }
 
 .tab-btn {
@@ -257,11 +261,22 @@ table {
     color: var(--text-muted);
     border: 1px solid var(--border);
     padding: 0.5rem 1rem;
-    border-radius: 4px;
     cursor: pointer;
     font-size: 0.95rem;
     font-weight: 500;
     transition: all 0.2s;
+    margin-left: -1px; /* Overlap borders to prevent double-thickness between items */
+}
+
+.tab-btn:first-child {
+    margin-left: 0;
+    border-top-left-radius: 4px;
+    border-bottom-left-radius: 0;
+}
+
+.tab-btn:last-child {
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 0;
 }
 
 .tab-btn:hover {
@@ -336,9 +351,33 @@ body.show-tooltips *:not(input)[title]::after {
     white-space: normal;
 }
 
+/* Dual Panel Split Container Styling */
+@media (min-width: 1001px) {
+    .dual-panel-container > .panel:first-child {
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+        border-right: none;
+    }
+    .dual-panel-container > .panel:last-child {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+    }
+}
+
 /* Responsive Dual Panels */
 @media (max-width: 1000px) {
     #panel-inventory, #panel-measurements {
         grid-template-columns: 1fr !important;
+    }
+    
+    .dual-panel-container > .panel:first-child {
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+        border-bottom: none;
+    }
+    
+    .dual-panel-container > .panel:last-child {
+        border-top-left-radius: 0;
+        border-top-right-radius: 0;
     }
 }

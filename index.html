@@ -14,7 +14,7 @@
         <header class="app-header">
             <div class="header-left">
                 <div class="top-left-profile">
-                    <p class="status-text" id="user-status">Profile: <strong id="current-user-display" style="cursor: pointer; text-decoration: underline; text-decoration-style: dotted;">Guest</strong></p>
+                    <p class="status-text" id="user-status"><span title="Profiles, their inventories, and measurements are stored locally on your device. They are not unique. Create as many as you wish." style="cursor: help;">Profile:</span> <strong id="current-user-display" style="cursor: pointer; text-decoration: underline; text-decoration-style: dotted;">Guest</strong></p>
                     <div class="input-group" id="login-input-group">
                         <input type="text" id="handle-input" class="small-input" placeholder="Enter handle...">
                         <button id="login-btn" class="small-btn">Load</button>
@@ -25,9 +25,9 @@
                 <h1>GoodRIIDance</h1>
                 <p>Radiation Absorption Spectroscopy Calculator</p>
                 <nav class="app-tabs">
-                    <button class="tab-btn active" id="tab-inventory">Inventory Manager</button>
+                    <button class="tab-btn active" id="tab-inventory">Inventory</button>
                     <button class="tab-btn" id="tab-measurements">Measurement</button>
-                    <button class="tab-btn" id="tab-results">Transmission &amp; Response</button>
+                    <button class="tab-btn" id="tab-results">Response</button>
                     <button class="tab-btn" id="tab-riidance">RIIDance</button>
                 </nav>
             </div>
@@ -35,7 +35,7 @@
         </header>
 
         <main class="dashboard">
-            <div id="panel-inventory" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: stretch;">
+            <div id="panel-inventory" class="dual-panel-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0; align-items: stretch;">
                 <section class="panel control-panel">
                     <h2 title="Add one or more detectors, known gamma sources, and attenuators that your have, along with any unknown gamma sources. Upon completing your inventory, move progressively through the tabs to reach a prediction of what isotope comprises your unknown source." style="display: flex; align-items: center; cursor: help;">
                         Add to Inventory
@@ -177,7 +177,7 @@
                 </section>
             </div>
 
-            <div id="panel-measurements" style="display: none; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: stretch;">
+            <div id="panel-measurements" class="dual-panel-container" style="display: none; grid-template-columns: 1fr 1fr; gap: 0; align-items: stretch;">
                 <section class="panel control-panel">
                     <h2 title="More data and more variety of data yields better predictions." style="cursor: help; display: flex; align-items: center;">
                         Measurement Setup
@@ -265,7 +265,7 @@
 
             <section class="panel results-panel" id="panel-results" style="display: none;">
                 <h2 style="display: flex; align-items: center;">
-                    Transmission &amp; Response
+                    Response
                     <button class="toggle-tooltips-btn" title="Toggle persistent educational tooltips" style="background: none; border: 1px solid var(--text-muted); color: var(--text-muted); border-radius: 50%; width: 18px; height: 18px; font-size: 0.75rem; cursor: pointer; display: inline-flex; justify-content: center; align-items: center; margin-left: 0.5rem;">?</button>
                 </h2>
                 
@@ -337,6 +337,14 @@
             </section>
 
             <section class="panel palette-panel" id="panel-palette" style="display: none;">
+                <h2>General Information</h2>
+                <div style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1.5rem; margin-bottom: 2.5rem; color: var(--text-main); font-size: 0.95rem; line-height: 1.6;">
+                    <p>This was built to meet the project requirements for the Georgia Institute of Technology Spring 2026 Radiation Detection (MP6757).</p>
+                    <p>The <a href="https://github.com/oddministrator/GoodRIIDance" target="_blank" rel="noopener noreferrer" style="color: var(--accent); text-decoration: underline;">project's github repository</a> contains all code for review, along with a README.md file with further information.</p>
+                    <p>On a more personal note, I realize that this sort of absorption spectroscopy and improvised attenuation (the tooltips encourage folding aluminum foil or using small containers of water as attenuators) techniques are not perfect, nor are they a replacement for more advanced spectroscopic methods and devices. That said, there are lots of hobbyists and underfunded professionals that have no access to RIIDs who can benefit from a 'good enough' list of possible isotopes when measuring some unknown source. Often all they need is something to help them narrow down the possibilities so they can know what they're measuring -- sometimes you know there are only 2-3 isotopes a source could be and a label has just fallen off or weathered away. Sometimes a professional actually owns a RIID but they just left it at the office, not expecting to need it.</p>
+                    <p>This app could absolutely be improved and expanded, something I'll likely do as I find more time once this semester and many of the stressors of life wind down, but I hope it meets the expectations of this course and (hopefully) proves useful for someone in the future.</p>
+                </div>
+                <hr class="panel-divider">
                 <h2>Color Palette</h2>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-top: 1rem;">
                     <!-- Primary Colors -->
@@ -386,7 +394,7 @@
         </main>
         
         <footer>
-            <p id="tab-palette" style="cursor: default;">&copy; 2026 Clayton Smith. All Rights Reserved.</p>
+            <p id="tab-palette" style="cursor: pointer;">&copy; 2026 Clayton Smith. All Rights Reserved. Click for info.</p>
         </footer>
     </div>
 
